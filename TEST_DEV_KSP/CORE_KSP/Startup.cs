@@ -1,7 +1,9 @@
+using CORE_KSP.Models.DbModels;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,6 +28,13 @@ namespace CORE_KSP
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            // add dbcontext
+            services.AddDbContext<DatabaseContext>();
+            // add services
+            //services.AddScoped<IUsuarioService, UsuarioService>();
+            //services.AddScoped<IPersonaFisicaService, PersonaFisicaService>();
+            //services.AddScoped<IReportesService, ReportesService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -34,6 +43,15 @@ namespace CORE_KSP
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+
+            // initialize database context, deleting and creating db model
+            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            {
+                var context = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                // asegurar la eliminación de la base de datos
+                context.Database.EnsureDeleted();
+                context.Database.Migrate();
             }
 
             app.UseHttpsRedirection();
